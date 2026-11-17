@@ -3,379 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cozy Neon Kart 3D</title>
-    <!-- Three.js CDN -->
+    <title>Desgraça Kart 3D</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
 
-        :root {
-            --bg-dark: #0f0a1e;
-            --primary: #6c5ce7;
-            --accent: #00cec9;
-            --pink: #fd79a8;
-            --yellow: #ffeaa7;
-            --green: #00b894;
-        }
+        * { box-sizing: border-box; user-select: none; font-family: 'Fredoka', cursive, sans-serif; }
+        body { margin: 0; padding: 0; background: #080511; color: #fff; overflow: hidden; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            font-family: 'Fredoka', cursive, sans-serif;
-        }
+        #app { position: relative; width: 100%; height: 100%; max-width: 1280px; max-height: 720px; background: #120c24; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.9); border: 3px solid #ff7675; }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background: var(--bg-dark);
-            color: #fff;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        .screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e133c 0%, #080511 100%); padding: 40px; z-index: 10; }
+        .hidden { display: none !important; }
 
-        #app {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 1280px;
-            max-height: 720px;
-            background: #181132;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            border: 2px solid #2f2157;
-        }
+        h1 { font-size: 64px; color: #ff7675; text-transform: uppercase; text-shadow: 0 5px 20px rgba(255,118,117,0.5); margin-bottom: 10px; }
+        p { color: #b2bec3; font-size: 18px; margin-bottom: 30px; }
 
-        .screen {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, #241947 0%, #0f0a1e 100%);
-            padding: 40px;
-            z-index: 10;
-            transition: opacity 0.3s ease;
-        }
+        .btn { background: linear-gradient(180deg, #ff7675 0%, #d63031 100%); border: none; border-bottom: 6px solid #9e1c1d; padding: 16px 36px; color: #fff; font-size: 20px; font-weight: 700; border-radius: 18px; cursor: pointer; box-shadow: 0 10px 25px rgba(214,48,49,0.5); transition: all 0.1s; }
+        .btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
+        .btn:active { transform: translateY(3px); border-bottom-width: 2px; }
 
-        .hidden {
-            display: none !important;
-        }
+        input[type="text"] { background: #1a1233; border: 3px solid #ff7675; padding: 16px 24px; color: #fff; font-size: 20px; font-weight: 700; border-radius: 16px; outline: none; text-align: center; width: 320px; margin-bottom: 20px; }
 
-        h1 {
-            font-size: 56px;
-            background: linear-gradient(135deg, #ffeaa7 0%, #fd79a8 50%, #74b9ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            text-align: center;
-            filter: drop-shadow(0 4px 15px rgba(253,121,168,0.4));
-        }
+        /* HUD DO JOGO */
+        #hud { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; z-index: 5; }
+        .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .hud-panel { background: rgba(18, 12, 36, 0.85); border: 2px solid #ff7675; padding: 14px 24px; border-radius: 16px; font-size: 20px; font-weight: 700; color: #ffeaa7; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+        
+        #minimap-container { width: 160px; height: 160px; background: rgba(18, 12, 36, 0.9); border: 3px solid #ff7675; border-radius: 50%; overflow: hidden; position: relative; }
+        #minimap-canvas { width: 100%; height: 100%; }
 
-        h2 {
-            font-size: 32px;
-            color: #74b9ff;
-            margin-bottom: 20px;
-        }
+        .hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+        #item-box { width: 100px; height: 100px; background: #1a1233; border: 4px solid #ffeaa7; border-radius: 22px; display: flex; justify-content: center; align-items: center; font-size: 42px; box-shadow: 0 0 25px rgba(255,234,167,0.5); }
+        #speedometer { font-size: 38px; font-weight: 700; color: #ffeaa7; text-shadow: 0 3px 12px rgba(0,0,0,0.9); }
 
-        p {
-            color: #b2bec3;
-            font-size: 16px;
-            margin-bottom: 25px;
-        }
-
-        .btn {
-            background: linear-gradient(180deg, #8c7ae6 0%, #6c5ce7 100%);
-            border: none;
-            border-bottom: 5px solid #4834d4;
-            padding: 14px 32px;
-            color: #fff;
-            font-size: 18px;
-            font-weight: 700;
-            border-radius: 16px;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
-            transition: all 0.1s ease;
-            margin: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        .btn:active {
-            transform: translateY(2px);
-            border-bottom-width: 2px;
-        }
-
-        .btn-green { background: linear-gradient(180deg, #55efc4 0%, #00b894 100%); border-bottom-color: #00896f; color: #06241d; }
-        .btn-pink { background: linear-gradient(180deg, #fd79a8 0%, #e84393 100%); border-bottom-color: #a82061; }
-        .btn-orange { background: linear-gradient(180deg, #ffeaa7 0%, #fdcb6e 100%); border-bottom-color: #e17055; color: #2d1e07; }
-
-        input[type="text"] {
-            background: #140d2b;
-            border: 2px solid #3f3366;
-            padding: 14px 20px;
-            color: #fff;
-            font-size: 18px;
-            font-weight: 600;
-            border-radius: 14px;
-            outline: none;
-            text-align: center;
-            width: 300px;
-            margin-bottom: 15px;
-        }
-
-        input[type="text"]:focus {
-            border-color: #00cec9;
-            box-shadow: 0 0 15px rgba(0,206,201,0.3);
-        }
-
-        .glass-panel {
-            background: rgba(28, 20, 56, 0.8);
-            border: 2px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            max-width: 900px;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #20173d;
-            border: 2px solid #3f3366;
-            border-radius: 18px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .card:hover {
-            transform: scale(1.03);
-            border-color: #a29bfe;
-            box-shadow: 0 10px 25px rgba(162,155,254,0.3);
-        }
-
-        .card.selected {
-            border-color: #55efc4;
-            background: rgba(85,239,196,0.15);
-            box-shadow: 0 0 25px rgba(85,239,196,0.3);
-        }
-
-        /* HUD do Jogo */
-        #hud {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            z-index: 5;
-        }
-
-        .hud-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .hud-panel {
-            background: rgba(15, 10, 30, 0.8);
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255,255,255,0.1);
-            padding: 12px 20px;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: 700;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-
-        #minimap-container {
-            width: 150px;
-            height: 150px;
-            background: rgba(15, 10, 30, 0.85);
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-        }
-
-        #minimap-canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .hud-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        #item-box {
-            width: 90px;
-            height: 90px;
-            background: rgba(20, 15, 40, 0.9);
-            border: 3px solid #ffeaa7;
-            border-radius: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 38px;
-            box-shadow: 0 0 20px rgba(255,234,167,0.4);
-        }
-
-        #speedometer {
-            text-align: right;
-            font-size: 32px;
-            font-weight: 700;
-            color: #ffeaa7;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        }
-
-        #countdown-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 96px;
-            font-weight: 700;
-            color: #ffeaa7;
-            text-shadow: 0 5px 30px rgba(253,203,110,0.6);
-            background: rgba(0,0,0,0.4);
-            z-index: 8;
-            pointer-events: none;
-        }
-
-        canvas.webgl {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+        #countdown-overlay { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 110px; font-weight: 700; color: #ff7675; text-shadow: 0 5px 35px rgba(255,118,117,0.7); background: rgba(0,0,0,0.5); z-index: 8; pointer-events: none; }
+        canvas.webgl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- RENDERIZADOR 3D THREE.JS -->
     <canvas class="webgl"></canvas>
 
     <!-- 1. TELA DE LOGIN -->
     <div id="screen-login" class="screen">
-        <h1>✨ Cozy Neon Kart ✨</h1>
-        <p>O jogo de corrida arcade mais fofo do navegador!</p>
-        <div class="glass-panel">
-            <input type="text" id="input-nick" placeholder="Seu Apelido..." maxlength="12" value="Chad">
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-                <span style="font-size: 15px; color: #b2bec3;">Cor do Kart:</span>
-                <input type="color" id="input-color" value="#ff7675" style="width: 50px; height: 40px; border-radius: 10px; border: 2px solid #3f3366; background: #140d2b; cursor: pointer;">
-            </div>
-            <button class="btn btn-green" onclick="Game.login()">Entrar na Garagem 🚀</button>
-        </div>
+        <h1>🔥 Desgraça Kart 🔥</h1>
+        <p>O jogo de corrida sem regras, sem dó e com muito caos!</p>
+        <input type="text" id="input-nick" placeholder="Seu Apelido..." maxlength="12" value="Chad">
+        <button class="btn" onclick="Game.startMenu()">ENTRAR NA CARNIÇA 🚀</button>
     </div>
 
     <!-- 2. MENU PRINCIPAL -->
     <div id="screen-menu" class="screen hidden">
-        <h1>Menu Principal</h1>
-        <div style="display: flex; flex-direction: column; width: 320px; gap: 10px;">
-            <button class="btn btn-green" onclick="Game.openTrackSelect('bots')">🤖 Jogar com Bots (Singleplayer)</button>
-            <button class="btn btn-pink" onclick="Game.openTrackSelect('multi')">🌐 Multiplayer (Lobby P2P)</button>
-            <button class="btn btn-orange" onclick="Game.openGarage()">🏎️ Garagem & Karts</button>
-            <button class="btn" onclick="Game.openConfig()">⚙️ Configurações</button>
+        <h1>Desgraça Kart</h1>
+        <p>Escolha sua modalidade de sofrimento:</p>
+        <div style="display: flex; flex-direction: column; gap: 15px; width: 340px;">
+            <button class="btn" onclick="Game.startRace()">🏎️ Jogar contra Bots (Modo Caos)</button>
         </div>
     </div>
 
-    <!-- 2.1 GARAGEM -->
-    <div id="screen-garage" class="screen hidden">
-        <h2>Garagem Customizada</h2>
-        <div class="grid-3">
-            <div class="card selected">
-                <div style="font-size: 40px;">🏎️</div>
-                <h3>Turbo Swift</h3>
-                <p>Velocidade: Alta<br>Aceleração: Média</p>
-            </div>
-            <div class="card">
-                <div style="font-size: 40px;">🚙</div>
-                <h3>Heavy Tank</h3>
-                <p>Velocidade: Média<br>Peso: Pesado</p>
-            </div>
-            <div class="card">
-                <div style="font-size: 40px;">🛸</div>
-                <h3>Neon Glider</h3>
-                <p>Velocidade: Máxima<br>Controle: Leve</p>
-            </div>
-        </div>
-        <button class="btn" onclick="Game.showScreen('screen-menu')">Voltar ao Menu</button>
-    </div>
-
-    <!-- 2.2 CONFIGURAÇÕES -->
-    <div id="screen-config" class="screen hidden">
-        <h2>Configurações</h2>
-        <div class="glass-panel" style="width: 350px; text-align: left; gap: 14px;">
-            <label>🎵 Volume Música: <input type="range" min="0" max="1" step="0.1" value="0.5" onchange="AudioSys.setMusicVol(this.value)"></label>
-            <label>🔊 Volume SFX: <input type="range" min="0" max="1" step="0.1" value="0.8" onchange="AudioSys.setSfxVol(this.value)"></label>
-        </div>
-        <button class="btn" onclick="Game.showScreen('screen-menu')" style="margin-top: 20px;">Voltar</button>
-    </div>
-
-    <!-- 2.3 SELEÇÃO DE PISTA -->
-    <div id="screen-tracks" class="screen hidden">
-        <h2>Escolha a Pista</h2>
-        <div class="grid-3" id="track-grid">
-            <div class="card selected" onclick="Game.selectTrack(0)">
-                <div style="font-size: 40px;">🟦</div>
-                <h3>Circuito Neon</h3>
-                <p>Curvas suaves & Boost pads</p>
-            </div>
-            <div class="card" onclick="Game.selectTrack(1)">
-                <div style="font-size: 40px;">🏜️</div>
-                <h3>Deserto do Oásis</h3>
-                <p>Rampas e saltos acrobáticos</p>
-            </div>
-            <div class="card" onclick="Game.selectTrack(2)">
-                <div style="font-size: 40px;">❄️</div>
-                <h3>Pista de Gelo</h3>
-                <p>Baixa tração & Derrapagem extrema</p>
-            </div>
-        </div>
-        <button class="btn btn-green" onclick="Game.startRace()">INICIAR CORRIDA 🏁</button>
-    </div>
-
-    <!-- 3. HUD DE CORRIDA -->
+    <!-- 3. HUD DA CORRIDA -->
     <div id="hud" class="hidden">
         <div class="hud-top">
             <div class="hud-panel" id="hud-position">Posição: 1º / 4</div>
             <div class="hud-panel" id="hud-lap">Volta: 1 / 3</div>
-            <div id="minimap-container">
-                <canvas id="minimap-canvas" width="150" height="150"></canvas>
-            </div>
+            <div id="minimap-container"><canvas id="minimap-canvas" width="160" height="160"></canvas></div>
         </div>
         <div class="hud-bottom">
-            <div id="item-box">🎁</div>
+            <div id="item-box">💣</div>
             <div id="speedometer">0 km/h</div>
         </div>
     </div>
@@ -384,380 +80,194 @@
 
     <!-- 4. PÓS-CORRIDA -->
     <div id="screen-podium" class="screen hidden">
-        <h1 id="podium-title">🏆 FIM DA CORRIDA!</h1>
-        <div class="glass-panel" id="podium-stats" style="min-width: 320px; margin-bottom: 20px; font-size: 18px;"></div>
-        <button class="btn btn-green" onclick="Game.showScreen('screen-menu')">Voltar ao Menu</button>
+        <h1 id="podium-title">🏆 FIM DA CORNIÇA!</h1>
+        <p id="podium-stats" style="font-size: 22px; color: #ffeaa7;"></p>
+        <button class="btn" onclick="location.reload()">JOGAR DE NOVO</button>
     </div>
 </div>
 
 <script>
-    // --- ÁUDIO PROCEDURAL (Web Audio API) ---
     const AudioSys = {
         ctx: null,
-        musicVol: 0.4,
-        sfxVol: 0.7,
-        init() {
-            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        },
-        playPop(freq = 440, type = 'sine') {
+        init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+        playPop(freq = 400) {
             try {
                 this.init();
                 let osc = this.ctx.createOscillator();
                 let gain = this.ctx.createGain();
-                osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(this.sfxVol * 0.3, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
                 osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.15);
-            } catch(e) {}
-        },
-        playBoost() {
-            try {
-                this.init();
-                let osc = this.ctx.createOscillator();
-                let gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.4);
-                gain.gain.setValueAtTime(this.sfxVol * 0.4, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.4);
-            } catch(e) {}
-        },
-        setMusicVol(v) { this.musicVol = parseFloat(v); },
-        setSfxVol(v) { this.sfxVol = parseFloat(v); }
-    };
-
-    // --- ESTADO DO JOGO ---
-    const Game = {
-        nick: 'Chad',
-        color: '#ff7675',
-        mode: 'bots',
-        trackIndex: 0,
-        
-        login() {
-            let nickInput = document.getElementById('input-nick').value.trim();
-            if (nickInput) this.nick = nickInput;
-            this.color = document.getElementById('input-color').value;
-            AudioSys.playPop(600);
-            this.showScreen('screen-menu');
-        },
-
-        showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById('hud').classList.add('hidden');
-            document.getElementById('countdown-overlay').classList.add('hidden');
-            let target = document.getElementById(id);
-            if (target) target.classList.remove('hidden');
-            if (id === 'screen-menu' || id === 'screen-garage' || id === 'screen-tracks') {
-                World3D.stop();
-            }
-        },
-
-        openGarage() { AudioSys.playPop(500); this.showScreen('screen-garage'); },
-        openConfig() { AudioSys.playPop(500); this.showScreen('screen-config'); },
-        
-        openTrackSelect(mode) {
-            AudioSys.playPop(500);
-            this.mode = mode;
-            this.showScreen('screen-tracks');
-        },
-
-        selectTrack(idx) {
-            AudioSys.playPop(520);
-            this.trackIndex = idx;
-            document.querySelectorAll('#track-grid .card').forEach((c, i) => {
-                c.classList.toggle('selected', i === idx);
-            });
-        },
-
-        startRace() {
-            AudioSys.playPop(800);
-            document.getElementById('screen-tracks').classList.add('hidden');
-            document.getElementById('hud').classList.remove('hidden');
-            World3D.init(this.trackIndex);
-        },
-
-        endRace(rank) {
-            World3D.stop();
-            this.showScreen('screen-podium');
-            document.getElementById('podium-stats').innerHTML = `
-                <div>👤 <b>Piloto:</b> ${this.nick}</div>
-                <div>🏅 <b>Posição Final:</b> ${rank}º Lugar</div>
-                <div>⏱️ <b>Tempo Total:</b> 01:24.32</div>
-            `;
+                osc.start(); osc.stop(this.ctx.currentTime + 0.12);
+            } catch(e){}
         }
     };
 
-    // --- MOTOR 3D THREE.JS & FÍSICA DE KART ---
+    const Game = {
+        nick: 'Chad',
+        startMenu() {
+            let n = document.getElementById('input-nick').value.trim();
+            if (n) this.nick = n;
+            AudioSys.playPop(500);
+            document.getElementById('screen-login').classList.add('hidden');
+            document.getElementById('screen-menu').classList.remove('hidden');
+        },
+        startRace() {
+            AudioSys.playPop(700);
+            document.getElementById('screen-menu').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            World3D.init();
+        },
+        endRace(rank) {
+            World3D.stop();
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('screen-podium').classList.remove('hidden');
+            document.getElementById('podium-stats').innerText = `${this.nick} ficou em ${rank}º Lugar!`;
+        }
+    };
+
     const World3D = {
-        scene: null,
-        camera: null,
-        renderer: null,
-        animId: null,
-        karts: [],
-        trackWaypoints: [],
-        items: [],
-        trackMesh: null,
-        isRunning: false,
-        keys: {},
-
-        init(trackIdx) {
-            const canvas = document.querySelector('webgl') || document.querySelector('.webgl');
+        scene: null, camera: null, renderer: null, karts: [], waypoints: [], isRunning: false, keys: {},
+        init() {
+            const canvas = document.querySelector('.webgl');
             this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(trackIdx === 2 ? '#0b1329' : (trackIdx === 1 ? '#22160d' : '#0f0a1e'));
-            this.scene.fog = new THREE.FogExp2(this.scene.background, 0.015);
+            this.scene.background = new THREE.Color('#0a0614');
+            this.scene.fog = new THREE.FogExp2('#0a0614', 0.012);
 
-            this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
             this.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
             this.renderer.setSize(window.innerWidth > 1280 ? 1280 : window.innerWidth, window.innerHeight > 720 ? 720 : window.innerHeight);
-            this.renderer.shadowMap.enabled = true;
 
-            // Luzes
-            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-            this.scene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(50, 100, 50);
-            dirLight.castShadow = true;
-            this.scene.add(dirLight);
+            this.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            let dir = new THREE.DirectionalLight(0xffffff, 0.8);
+            dir.position.set(40, 80, 40);
+            this.scene.add(dir);
 
-            this.buildTrack(trackIdx);
+            this.buildTrack();
             this.spawnKarts();
 
             this.keys = {};
-            window.onkeydown = (e) => this.keys[e.code] = true;
-            window.onkeyup = (e) => this.keys[e.code] = false;
+            window.onkeydown = e => this.keys[e.code] = true;
+            window.onkeyup = e => this.keys[e.code] = false;
 
             this.startCountdown();
         },
-
-        buildTrack(idx) {
-            // Gera waypoints da pista em formato oval/arredondado
-            this.trackWaypoints = [];
-            const radiusX = 90, radiusZ = 70;
-            for (let i = 0; i < 20; i++) {
-                let angle = (i / 20) * Math.PI * 2;
-                this.trackWaypoints.push(new THREE.Vector3(
-                    Math.cos(angle) * radiusX,
-                    0,
-                    Math.sin(angle) * radiusZ
-                ));
+        buildTrack() {
+            this.waypoints = [];
+            for (let i = 0; i < 24; i++) {
+                let angle = (i / 24) * Math.PI * 2;
+                this.waypoints.push(new THREE.Vector3(Math.cos(angle) * 85, 0, Math.sin(angle) * 65));
             }
-
-            // Pista Visual
-            const trackGeo = new THREE.TorusGeometry(80, 16, 16, 100);
-            const trackMat = new THREE.MeshStandardMaterial({ 
-                color: idx === 2 ? 0xa4b0be : (idx === 1 ? 0xe1b12c : 0x2d3436),
-                roughness: 0.8 
-            });
-            this.trackMesh = new THREE.Mesh(trackGeo, trackMat);
-            this.trackMesh.rotation.x = Math.PI / 2;
-            this.trackMesh.receiveShadow = true;
-            this.scene.add(this.trackMesh);
-
-            // Decorações fofas (cogumelos/pilares neon)
-            for (let i = 0; i < 12; i++) {
-                let angle = (i / 12) * Math.PI * 2;
-                let decoGeo = new THREE.CylinderGeometry(2, 4, 12, 8);
-                let decoMat = new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xff7675 : 0x00cec9, emissive: 0x333333 });
-                let deco = new THREE.Mesh(decoGeo, decoMat);
-                deco.position.set(Math.cos(angle) * 110, 6, Math.sin(angle) * 90);
-                this.scene.add(deco);
-            }
+            let trackGeo = new THREE.TorusGeometry(75, 14, 16, 80);
+            let trackMat = new THREE.MeshStandardMaterial({ color: 0x221a36, roughness: 0.9 });
+            let track = new THREE.Mesh(trackGeo, trackMat);
+            track.rotation.x = Math.PI / 2;
+            this.scene.add(track);
         },
-
         spawnKarts() {
             this.karts = [];
-            const colors = [Game.color, '#0984e3', '#00b894', '#fdcb6e'];
-            const names = [Game.nick, 'Bot Roxo', 'Bot Verde', 'Bot Amarelo'];
+            let colors = [0xff7675, 0x74b9ff, 0x55efc4, 0xfdcb6e];
+            let names = [Game.nick, 'Bot Mau', 'Bot Insano', 'Bot Apelão'];
 
             for (let i = 0; i < 4; i++) {
-                let isPlayer = i === 0;
-                let kartGroup = new THREE.Group();
+                let g = new THREE.Group();
+                let b = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.8, 6.5), new THREE.MeshStandardMaterial({ color: colors[i] }));
+                b.position.y = 1;
+                g.add(b);
+                let h = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+                h.position.set(0, 2.6, 0);
+                g.add(h);
 
-                // Corpo do Kart
-                let bodyGeo = new THREE.BoxGeometry(4, 2, 7);
-                let bodyMat = new THREE.MeshStandardMaterial({ color: colors[i], roughness: 0.3 });
-                let body = new THREE.Mesh(bodyGeo, bodyMat);
-                body.position.y = 1.2;
-                body.castShadow = true;
-                kartGroup.add(body);
+                let wp = this.waypoints[0];
+                g.position.set(wp.x + (i * 3), 0, wp.z + (i * 5));
+                this.scene.add(g);
 
-                // Cabecinha fofa do piloto
-                let headGeo = new THREE.SphereGeometry(1.4, 16, 16);
-                let headMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                let head = new THREE.Mesh(headGeo, headMat);
-                head.position.set(0, 3, 0);
-                kartGroup.add(head);
-
-                let startWP = this.trackWaypoints[0];
-                kartGroup.position.set(startWP.x + (i * 4), 0, startWP.z + (i * 6));
-                this.scene.add(kartGroup);
-
-                this.karts.push({
-                    mesh: kartGroup,
-                    speed: 0,
-                    maxSpeed: 0.85,
-                    accel: 0.02,
-                    turnSpeed: 0.04,
-                    angle: 0,
-                    wpIndex: 0,
-                    lap: 1,
-                    isPlayer: isPlayer,
-                    name: names[i]
-                });
+                this.karts.push({ mesh: g, speed: 0, maxSpeed: 0.9, angle: 0, wpIndex: 0, lap: 1, isPlayer: i === 0, name: names[i] });
             }
         },
-
         startCountdown() {
-            let overlay = document.getElementById('countdown-overlay');
-            overlay.classList.remove('hidden');
-            let count = 3;
-            overlay.innerText = count;
-            AudioSys.playPop(500);
-
-            let timer = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    overlay.innerText = count;
-                    AudioSys.playPop(500);
-                } else if (count === 0) {
-                    overlay.innerText = "JÁ! 🚀";
-                    AudioSys.playBoost();
-                } else {
-                    clearInterval(timer);
-                    overlay.classList.add('hidden');
-                    this.isRunning = true;
-                    this.loop();
-                }
+            let ov = document.getElementById('countdown-overlay');
+            ov.classList.remove('hidden');
+            let c = 3; ov.innerText = c;
+            AudioSys.playPop(400);
+            let t = setInterval(() => {
+                c--;
+                if (c > 0) { ov.innerText = c; AudioSys.playPop(400); }
+                else if (c === 0) { ov.innerText = "VALENDO A CARNIÇA! 🔥"; AudioSys.playPop(800); }
+                else { clearInterval(t); ov.classList.add('hidden'); this.isRunning = true; this.loop(); }
             }, 1000);
         },
-
         loop() {
             if (!this.isRunning) return;
             this.update();
             this.renderer.render(this.scene, this.camera);
-            this.animId = requestAnimationFrame(() => this.loop());
+            requestAnimationFrame(() => this.loop());
         },
-
         update() {
-            // Controles do Jogador
-            let player = this.karts[0];
-            if (player) {
-                if (this.keys['ArrowUp'] || this.keys['KeyW']) {
-                    player.speed = Math.min(player.maxSpeed, player.speed + player.accel);
-                } else if (this.keys['ArrowDown'] || this.keys['KeyS']) {
-                    player.speed = Math.max(-player.maxSpeed / 2, player.speed - player.accel);
-                } else {
-                    player.speed *= 0.95; // Fricção
-                }
+            let p = this.karts[0];
+            if (p) {
+                if (this.keys['ArrowUp'] || this.keys['KeyW']) p.speed = Math.min(p.maxSpeed, p.speed + 0.02);
+                else if (this.keys['ArrowDown'] || this.keys['KeyS']) p.speed = Math.max(-0.4, p.speed - 0.02);
+                else p.speed *= 0.94;
 
-                if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
-                    player.angle += player.turnSpeed * (player.speed / player.maxSpeed);
-                    player.mesh.rotation.y = player.angle;
-                }
-                if (this.keys['ArrowRight'] || this.keys['KeyD']) {
-                    player.angle -= player.turnSpeed * (player.speed / player.maxSpeed);
-                    player.mesh.rotation.y = player.angle;
-                }
+                if (this.keys['ArrowLeft'] || this.keys['KeyA']) p.angle += 0.045 * (p.speed / p.maxSpeed);
+                if (this.keys['ArrowRight'] || this.keys['KeyD']) p.angle -= 0.045 * (p.speed / p.maxSpeed);
+                p.mesh.rotation.y = p.angle;
+                p.mesh.translateZ(p.speed);
 
-                // Turbo com Espaço ou Shift
-                if (this.keys['Space'] || this.keys['ShiftLeft']) {
-                    player.speed = Math.min(player.maxSpeed * 1.5, player.speed + 0.05);
-                }
+                let cp = new THREE.Vector3(p.mesh.position.x - Math.sin(p.angle)*16, p.mesh.position.y + 7, p.mesh.position.z - Math.cos(p.angle)*16);
+                this.camera.position.lerp(cp, 0.2);
+                this.camera.lookAt(p.mesh.position.clone().add(new THREE.Vector3(0, 1.5, 0)));
 
-                player.mesh.translateZ(player.speed);
-
-                // Câmera suave seguindo o kart (Lerp)
-                let targetCamPos = new THREE.Vector3(
-                    player.mesh.position.x - Math.sin(player.angle) * 18,
-                    player.mesh.position.y + 8,
-                    player.mesh.position.z - Math.cos(player.angle) * 18
-                );
-                this.camera.position.lerp(targetCamPos, 0.15);
-                this.camera.lookAt(player.mesh.position.clone().add(new THREE.Vector3(0, 2, 0)));
-
-                // Velocímetro HUD
-                document.getElementById('speedometer').innerText = `${Math.round(player.speed * 140)} km/h`;
+                document.getElementById('speedometer').innerText = `${Math.round(p.speed * 150)} km/h`;
             }
 
-            // Inteligência Artificial dos Bots
             for (let i = 1; i < this.karts.length; i++) {
                 let bot = this.karts[i];
-                let targetWP = this.trackWaypoints[bot.wpIndex];
-                
-                let dir = new THREE.Vector3().subVectors(targetWP, bot.mesh.position);
-                let targetAngle = Math.atan2(dir.x, dir.z);
-                bot.angle = targetAngle;
+                let twp = this.waypoints[bot.wpIndex];
+                let dir = new THREE.Vector3().subVectors(twp, bot.mesh.position);
+                bot.angle = Math.atan2(dir.x, dir.z);
                 bot.mesh.rotation.y = bot.angle;
-                bot.speed = bot.maxSpeed * 0.82;
+                bot.speed = bot.maxSpeed * 0.85;
                 bot.mesh.translateZ(bot.speed);
 
-                if (bot.mesh.position.distanceTo(targetWP) < 25) {
-                    bot.wpIndex = (bot.wpIndex + 1) % this.trackWaypoints.length;
+                if (bot.mesh.position.distanceTo(twp) < 25) {
+                    bot.wpIndex = (bot.wpIndex + 1) % this.waypoints.length;
                     if (bot.wpIndex === 0) {
                         bot.lap++;
-                        if (bot.lap > 3 && this.isRunning) {
-                            this.isRunning = false;
-                            Game.endRace(i + 1);
-                        }
+                        if (bot.lap > 3 && this.isRunning) { this.isRunning = false; Game.endRace(i + 1); }
                     }
                 }
             }
 
-            // Atualiza progresso do Player
-            let pTargetWP = this.trackWaypoints[player.wpIndex];
-            if (player.mesh.position.distanceTo(pTargetWP) < 30) {
-                player.wpIndex = (player.wpIndex + 1) % this.trackWaypoints.length;
-                if (player.wpIndex === 0) {
-                    player.lap++;
-                    document.getElementById('hud-lap').innerText = `Volta: ${player.lap} / 3`;
-                    if (player.lap > 3) {
-                        this.isRunning = false;
-                        Game.endRace(1);
-                    }
+            let pt = this.waypoints[p.wpIndex];
+            if (p.mesh.position.distanceTo(pt) < 30) {
+                p.wpIndex = (p.wpIndex + 1) % this.waypoints.length;
+                if (p.wpIndex === 0) {
+                    p.lap++;
+                    document.getElementById('hud-lap').innerText = `Volta: ${p.lap} / 3`;
+                    if (p.lap > 3) { this.isRunning = false; Game.endRace(1); }
                 }
             }
-
             this.drawMinimap();
         },
-
         drawMinimap() {
-            const canvas = document.getElementById('minimap-canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, 150, 150);
+            let cvs = document.getElementById('minimap-canvas'), ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, 160, 160);
+            ctx.fillStyle = '#120c24'; ctx.fillRect(0, 0, 160, 160);
+            ctx.strokeStyle = '#ff7675'; ctx.lineWidth = 12;
+            ctx.beginPath(); ctx.arc(80, 80, 52, 0, Math.PI*2); ctx.stroke();
 
-            // Fundo do Minimapa
-            ctx.fillStyle = 'rgba(20, 15, 40, 0.9)';
-            ctx.fillRect(0, 0, 150, 150);
-
-            // Desenha Pista Circular no Minimapa
-            ctx.strokeStyle = '#6c5ce7';
-            ctx.lineWidth = 14;
-            ctx.beginPath();
-            ctx.arc(75, 75, 50, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Desenha os Karts
             this.karts.forEach((k, idx) => {
-                let mx = 75 + (k.mesh.position.x / 110) * 50;
-                let my = 75 + (k.mesh.position.z / 90) * 50;
+                let mx = 80 + (k.mesh.position.x / 100) * 52;
+                let my = 80 + (k.mesh.position.z / 80) * 52;
                 ctx.fillStyle = idx === 0 ? '#55efc4' : '#ff7675';
-                ctx.beginPath();
-                ctx.arc(mx, my, idx === 0 ? 5 : 3.5, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(mx, my, idx === 0 ? 5 : 3.5, 0, Math.PI*2); ctx.fill();
             });
         },
-
-        stop() {
-            this.isRunning = false;
-            if (this.animId) cancelAnimationFrame(this.animId);
-            window.onkeydown = null;
-            window.onkeyup = null;
-        }
+        stop() { this.isRunning = false; window.onkeydown = null; window.onkeyup = null; }
     };
 </script>
 
