@@ -111,7 +111,6 @@
 
         input:focus { border-color: #6c5ce7; }
 
-        /* Grid de Bolas & Mapas */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -152,18 +151,6 @@
         }
 
         .flex-row { display: flex; gap: 15px; align-items: center; justify-content: center; }
-        
-        .avatar-tag {
-            position: absolute;
-            background: #6c5ce7;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            pointer-events: none;
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
@@ -178,7 +165,7 @@
             <label style="font-size: 14px; color: #b2bec3;">Cor:</label>
             <input type="color" id="input-color" value="#ff7675" style="width: 60px; height: 40px; padding: 2px; cursor: pointer;">
         </div>
-        <button class="btn btn-green" onclick="Game.login()">Entrar no Jogo 🚀</button>
+        <button class="btn btn-green" id="btn-login" onclick="Game.login()">Entrar no Jogo 🚀</button>
     </div>
 
     <!-- 2. MENU PRINCIPAL -->
@@ -283,7 +270,6 @@
 </div>
 
 <script>
-    // --- ÁUDIO PROCEDURAL (Web Audio API) ---
     const AudioSys = {
         ctx: null,
         musicVol: 0.5,
@@ -292,43 +278,46 @@
             if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         },
         playPop(freq = 400, type = 'sine') {
-            this.init();
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(this.sfxVol * 0.3, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-            osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+            try {
+                this.init();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(this.sfxVol * 0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+            } catch(e) {}
         },
         playBoing() {
-            this.init();
-            let osc = this.ctx.createOscillator();
-            let gain = this.ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.15);
-            gain.gain.setValueAtTime(this.sfxVol * 0.4, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-            osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+            try {
+                this.init();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(this.sfxVol * 0.4, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+            } catch(e) {}
         },
         setMusicVol(v) { this.musicVol = parseFloat(v); },
         setSfxVol(v) { this.sfxVol = parseFloat(v); }
     };
 
-    // --- DEFINIÇÕES DE BOLAS E MAPAS ---
     const BALL_TYPES = [
-        { id: 'pyro', name: 'Pyro (Fogo)', color: '#ff7675', hp: 100, speed: 4, powerName: 'Rastro de Lava & Dash', desc: 'Deixa fogo no chão e avança rápido.' },
+        { id: 'pyro', name: 'Pyro (Fogo)', color: '#ff7675', hp: 100, speed: 4, powerName: 'Rastro de Lava', desc: 'Deixa fogo no chão e avança rápido.' },
         { id: 'frost', name: 'Frost (Gelo)', color: '#74b9ff', hp: 100, speed: 3.8, powerName: 'Onda Congelante', desc: 'Emite pulso que reduz velocidade alheia.' },
-        { id: 'volt', name: 'Volt (Elétrica)', color: '#ffeaa7', hp: 90, speed: 4.5, powerName: 'Raio Ricochete', desc: 'Dispara raio elétrico nos inimigos próximos.' },
-        { id: 'tank', name: 'Tank (Pedra)', color: '#636e72', hp: 150, speed: 3, powerName: 'Super Massa', desc: 'Fica gigante, pesada e imune a dano por 3s.' },
+        { id: 'volt', name: 'Volt (Elétrica)', color: '#ffeaa7', hp: 90, speed: 4.5, powerName: 'Raio Ricochete', desc: 'Dispara raio elétrico nos inimigos.' },
+        { id: 'tank', name: 'Tank (Pedra)', color: '#636e72', hp: 150, speed: 3, powerName: 'Super Massa', desc: 'Fica gigante, pesada e imune a dano.' },
         { id: 'ghost', name: 'Ghost (Fantasma)', color: '#a29bfe', hp: 80, speed: 4.2, powerName: 'Intangibilidade', desc: 'Fica invisível e atravessa ataques.' },
         { id: 'dracula', name: 'Dracula (Vampira)', color: '#e84393', hp: 100, speed: 3.9, powerName: 'Roubo de Vida', desc: 'Cura HP ao colidir fisicamente.' },
-        { id: 'boom', name: 'Boom (Bomba)', color: '#fdcb6e', hp: 95, speed: 4, powerName: 'Mina Explosiva', desc: 'Deixa armadilhas fofas que explodem.' },
-        { id: 'mag', name: 'Mag (Magnética)', color: '#00cec9', hp: 100, speed: 4, powerName: 'Campo Magnético', desc: 'Atrai/repele bolas ao redor.' }
+        { id: 'boom', name: 'Boom (Bomba)', color: '#fdcb6e', hp: 95, speed: 4, powerName: 'Mina Explosiva', desc: 'Deixa armadilhas que explodem.' },
+        { id: 'mag', name: 'Mag (Magnética)', color: '#00cec9', hp: 100, speed: 4, powerName: 'Campo Magnético', desc: 'Atrai ou repele bolas ao redor.' }
     ];
 
     const MAP_TYPES = [
@@ -337,16 +326,14 @@
         { id: 'pinball', name: 'Arena Pinball', shape: 'pinball' }
     ];
 
-    // --- ESTADO GLOBAL DO JOGO ---
     const Game = {
         nick: 'Chad',
         color: '#ff7675',
-        mode: 'bots', // 'bots' ou 'multi'
+        mode: 'bots',
         botCount: 2,
         selectedBallId: null,
         selectedMapId: null,
         screenShake: true,
-        shakeTimer: 0,
         timerInterval: null,
         
         init() {
@@ -365,7 +352,8 @@
 
         showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            let target = document.getElementById(id);
+            if (target) target.classList.remove('hidden');
         },
 
         openConfig() { this.showScreen('screen-config'); },
@@ -389,8 +377,10 @@
             AudioSys.playPop(500);
             this.selectedBallId = id;
             document.querySelectorAll('#ball-grid .card').forEach(c => c.classList.remove('selected'));
-            document.getElementById(`ball-card-${id}`).classList.add('selected');
-            document.getElementById('btn-confirm-ball').disabled = false;
+            let card = document.getElementById(`ball-card-${id}`);
+            if (card) card.classList.add('selected');
+            let confirmBtn = document.getElementById('btn-confirm-ball');
+            if (confirmBtn) confirmBtn.disabled = false;
         },
 
         confirmBall() {
@@ -405,11 +395,12 @@
         startBallSelection() {
             this.showScreen('screen-select-ball');
             let timeLeft = 20;
-            document.getElementById('timer-ball').innerText = timeLeft + 's';
+            let timerEl = document.getElementById('timer-ball');
+            if (timerEl) timerEl.innerText = timeLeft + 's';
             clearInterval(this.timerInterval);
             this.timerInterval = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer-ball').innerText = timeLeft + 's';
+                if (timerEl) timerEl.innerText = timeLeft + 's';
                 if (timeLeft <= 0) {
                     clearInterval(this.timerInterval);
                     if (!this.selectedBallId) this.selectedBallId = BALL_TYPES[0].id;
@@ -431,11 +422,12 @@
         startMapVoting() {
             this.showScreen('screen-select-map');
             let timeLeft = 15;
-            document.getElementById('timer-map').innerText = timeLeft + 's';
+            let timerEl = document.getElementById('timer-map');
+            if (timerEl) timerEl.innerText = timeLeft + 's';
             clearInterval(this.timerInterval);
             this.timerInterval = setInterval(() => {
                 timeLeft--;
-                document.getElementById('timer-map').innerText = timeLeft + 's';
+                if (timerEl) timerEl.innerText = timeLeft + 's';
                 if (timeLeft <= 0) {
                     clearInterval(this.timerInterval);
                     if (!this.selectedMapId) this.selectedMapId = MAP_TYPES[0].id;
@@ -456,7 +448,8 @@
 
         startBotsMatch() {
             this.mode = 'bots';
-            this.botCount = parseInt(document.getElementById('bot-count').value);
+            let sel = document.getElementById('bot-count');
+            if (sel) this.botCount = parseInt(sel.value);
             this.startBallSelection();
         },
 
@@ -467,7 +460,6 @@
         }
     };
 
-    // --- SISTEMA MULTIPLAYER (PeerJS P2P) ---
     const Multiplayer = {
         peer: null,
         conn: null,
@@ -478,7 +470,7 @@
         createRoom() {
             Game.mode = 'multi';
             this.isHost = true;
-            this.roomCode = Math.random().toString(36.substring(2, 8)).toUpperCase().slice(2, 8);
+            this.roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             this.peer = new Peer('cozy-' + this.roomCode);
             
             this.peer.on('open', (id) => {
@@ -496,7 +488,8 @@
         joinRoom() {
             Game.mode = 'multi';
             this.isHost = false;
-            let code = document.getElementById('room-code-input').value.trim().toUpperCase();
+            let input = document.getElementById('room-code-input');
+            let code = input ? input.value.trim().toUpperCase() : '';
             if (!code) return alert('Digite o código da sala!');
             this.roomCode = code;
             this.peer = new Peer();
@@ -509,6 +502,7 @@
         },
 
         setupConnectionEvents() {
+            if (!this.conn) return;
             this.conn.on('open', () => {
                 this.conn.send({ type: 'JOIN', nick: Game.nick, color: Game.color });
             });
@@ -536,31 +530,29 @@
         },
 
         updateRoomUI() {
-            document.getElementById('room-title').innerText = `Sala: ${this.roomCode}`;
+            let titleEl = document.getElementById('room-title');
+            if (titleEl) titleEl.innerText = `Sala: ${this.roomCode}`;
             const list = document.getElementById('player-list');
-            list.innerHTML = this.players.map(p => `<li>🟢 ${p.nick} ${p.ready ? '(Pronto)' : ''}</li>`).join('');
+            if (list) list.innerHTML = this.players.map(p => `<li>🟢 ${p.nick} ${p.ready ? '(Pronto)' : ''}</li>`).join('');
             const btn = document.getElementById('btn-room-action');
-            if (this.isHost) {
-                btn.innerText = "JOGAR";
-                btn.onclick = () => {
-                    this.broadcast({ type: 'START_BALL_SELECT' });
-                    Game.startBallSelection();
-                };
-            } else {
-                btn.innerText = "PRONTO!";
-                btn.onclick = () => {
-                    this.conn.send({ type: 'READY' });
-                };
+            if (btn) {
+                if (this.isHost) {
+                    btn.innerText = "JOGAR";
+                    btn.onclick = () => {
+                        this.broadcast({ type: 'START_BALL_SELECT' });
+                        Game.startBallSelection();
+                    };
+                } else {
+                    btn.innerText = "PRONTO!";
+                    btn.onclick = () => {
+                        if (this.conn) this.conn.send({ type: 'READY' });
+                    };
+                }
             }
         },
 
-        sendPlayerReady() {
-            Game.startMapVoting();
-        },
-
-        sendMapVote(mapId) {
-            Game.launchGame();
-        },
+        sendPlayerReady() { Game.startMapVoting(); },
+        sendMapVote(mapId) { Game.launchGame(); },
 
         leaveRoom() {
             if (this.peer) this.peer.destroy();
@@ -568,7 +560,6 @@
         }
     };
 
-    // --- MOTOR DE FÍSICA E BATALHA (Auto-Battler) ---
     const MatchEngine = {
         canvas: null,
         ctx: null,
@@ -582,7 +573,6 @@
             this.ctx = this.canvas.getContext('2d');
             this.map = MAP_TYPES.find(m => m.id === Game.selectedMapId) || MAP_TYPES[0];
             
-            // Criar Bola do Jogador
             let myType = BALL_TYPES.find(b => b.id === Game.selectedBallId) || BALL_TYPES[0];
             this.balls = [{
                 x: 200, y: 240, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6,
@@ -590,7 +580,6 @@
                 type: myType, isBot: false, cooldown: 0, powerActive: 0
             }];
 
-            // Criar Bots
             for (let i = 0; i < Game.botCount; i++) {
                 let bType = BALL_TYPES[Math.floor(Math.random() * BALL_TYPES.length)];
                 let colors = ['#00b894', '#0984e3', '#fdcb6e', '#e17055'];
@@ -615,8 +604,8 @@
 
         triggerPower(ball) {
             if (ball.cooldown <= 0) {
-                ball.powerActive = 120; // 2 segundos de poder ativo
-                ball.cooldown = 300; // Recarga
+                ball.powerActive = 120;
+                ball.cooldown = 300;
                 AudioSys.playPop(800, 'square');
             }
         },
@@ -634,20 +623,16 @@
 
             this.balls.forEach(b => {
                 if (b.hp <= 0) return;
-
                 if (b.powerActive > 0) b.powerActive--;
                 if (b.cooldown > 0) b.cooldown--;
 
-                // IA dos bots usarem poder
                 if (b.isBot && b.cooldown <= 0 && Math.random() < 0.02) {
                     this.triggerPower(b);
                 }
 
-                // Movimento autônomo
                 b.x += b.vx;
                 b.y += b.vy;
 
-                // Colisão com Paredes Conforme o Mapa
                 if (this.map.shape === 'rect') {
                     if (b.x - b.radius < 0) { b.x = b.radius; b.vx *= -1; AudioSys.playBoing(); }
                     if (b.x + b.radius > w) { b.x = w - b.radius; b.vx *= -1; AudioSys.playBoing(); }
@@ -665,13 +650,12 @@
                         b.vy = (b.vy - 2 * dot * ny) * 1.02;
                         AudioSys.playBoing();
                     }
-                } else { // Pinball
+                } else {
                     if (b.x - b.radius < 0 || b.x + b.radius > w) { b.vx *= -1; AudioSys.playBoing(); }
                     if (b.y - b.radius < 0 || b.y + b.radius > h) { b.vy *= -1; AudioSys.playBoing(); }
                 }
             });
 
-            // Colisão entre Bolas
             for (let i = 0; i < this.balls.length; i++) {
                 for (let j = i + 1; j < this.balls.length; j++) {
                     let b1 = this.balls[i], b2 = this.balls[j];
@@ -696,7 +680,6 @@
                 }
             }
 
-            // Verificar Fim de Jogo
             let alive = this.balls.filter(b => b.hp > 0);
             if (alive.length <= 1) {
                 this.running = false;
@@ -710,7 +693,6 @@
             let ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
             ctx.clearRect(0, 0, w, h);
 
-            // Desenhar Mapa
             ctx.strokeStyle = '#3f3366';
             ctx.lineWidth = 4;
             if (this.map.shape === 'rect') {
@@ -724,19 +706,16 @@
                 ctx.beginPath(); ctx.arc(w/2, h/2, 40, 0, Math.PI*2); ctx.stroke();
             }
 
-            // Desenhar Bolas
             this.balls.forEach(b => {
                 if (b.hp <= 0) return;
                 ctx.save();
                 ctx.translate(b.x, b.y);
 
-                // Glow se poder ativo
                 if (b.powerActive > 0) {
                     ctx.shadowBlur = 20;
                     ctx.shadowColor = b.color;
                 }
 
-                // Corpo da Bola
                 ctx.fillStyle = b.color;
                 ctx.beginPath();
                 ctx.arc(0, 0, b.radius, 0, Math.PI*2);
@@ -745,20 +724,17 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Rostinho fofo
                 ctx.fillStyle = '#fff';
                 ctx.fillRect(-6, -4, 4, 6);
                 ctx.fillRect(2, -4, 4, 6);
 
                 ctx.restore();
 
-                // Barra de HP
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(b.x - 20, b.y - 32, 40, 6);
                 ctx.fillStyle = '#55efc4';
                 ctx.fillRect(b.x - 20, b.y - 32, (b.hp / b.maxHp) * 40, 6);
 
-                // Nick
                 ctx.fillStyle = '#fff';
                 ctx.font = '11px Fredoka';
                 ctx.textAlign = 'center';
@@ -768,8 +744,10 @@
 
         showGameOver(winner) {
             Game.showScreen('screen-gameover');
-            document.getElementById('winner-title').innerText = `Vencedor: ${winner.nick}! 🎉`;
-            document.getElementById('match-stats').innerHTML = `
+            let wTitle = document.getElementById('winner-title');
+            if (wTitle) wTitle.innerText = `Vencedor: ${winner.nick}! 🎉`;
+            let stats = document.getElementById('match-stats');
+            if (stats) stats.innerHTML = `
                 <b>Modo:</b> ${Game.mode.toUpperCase()}<br>
                 <b>Mapa:</b> ${this.map.name}<br>
                 <b>Status:</b> Partida finalizada com sucesso!
